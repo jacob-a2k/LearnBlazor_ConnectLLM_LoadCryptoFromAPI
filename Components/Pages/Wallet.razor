@@ -1,0 +1,98 @@
+﻿@page "/wallet"
+@using System.Globalization
+@using Zaliczenie.Components.Models
+@using Zaliczenie.Components.Services
+@using Zaliczenie.Components.Utils
+@using static Zaliczenie.Components.Pages.Crypto
+@rendermode InteractiveServer
+
+@inject CryptoService CryptoService
+
+
+<h3>Wirtualny Portfel: @totalAmount.ToString("C2")</h3>
+
+@if (_cryptoCoins is null)
+{
+    <p>Ładowanie danych...</p>
+}
+else
+{
+    <label>Wybierz którą monete chcesz dodac do Portfela</label>
+    <select @bind=selectedSymbol>
+        @foreach (var coin in _cryptoCoins)
+        {
+            <option value="@coin.symbol">@coin.symbol</option>
+        }
+    </select>
+    <button @onclick="AddToWallet">Dodaj</button>
+}
+
+@if (_cryptoCoins is not null)
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Ilość(szt)</th>
+                <th>Logo</th>
+                <th>Nazwa</th>
+                <th>Symbol</th>
+                <th>Cena (USD)</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var asset in _uniqueWallet)
+            {
+                <tr>
+                    <td>@_virtualWallet.Count(coin => coin.symbol == asset.symbol)</td>
+                    <td>
+                        <img src="@asset.IconUrl"
+                             alt="@asset.symbol"
+                             width="32" height="32"
+                             onerror="this.onerror=null;
+                                                                        this.src='sample-icon.png';" />
+                    </td>
+                    <td>@asset.name</td>
+                    <td>@asset.symbol</td>
+                    <td>@(ParsingUtils.ParseDecimal(asset.priceUsd).ToString("C2", CultureInfo.GetCultureInfo("en-US")))</td>
+                    <td>
+                        <button @onclick="() => RemoveFromWallet(asset)">Usuń</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+
+    private List<CoinCapAsset>? _virtualWallet = new();
+    private IEnumerable<CoinCapAsset> _uniqueWallet => _virtualWallet.DistinctBy(coin => coin.symbol);
+
+    private List<CoinCapAsset>? _cryptoCoins;
+
+    private string selectedSymbol = "";
+    private decimal totalAmount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _cryptoCoins = await CryptoService.GetCoinsAsync();
+    }
+
+    private void AddToWallet()
+    {
+        if (string.IsNullOrWhiteSpace(selectedSymbol) || _cryptoCoins is null) return;
+
+        var coin = _cryptoCoins.FirstOrDefault(c => c.symbol == selectedSymbol);
+        _virtualWallet.Add(coin);
+        totalAmount += ParsingUtils.ParseDecimal(coin.priceUsd);
+        selectedSymbol = "";
+    }
+
+    private void RemoveFromWallet(CoinCapAsset coin)
+    {
+        totalAmount -= ParsingUtils.ParseDecimal(coin.priceUsd);
+        _virtualWallet.Remove(coin);
+    }
+}

@@ -1,0 +1,32 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Zaliczenie</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="crypto" Match="NavLinkMatch.All">
+                <span class="bi bi-crypto-nav-menu" aria-hidden="true"></span> Crypto
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="wallet">
+                <span class="bi bi-wallet-nav-menu" aria-hidden="true"></span> Portfel
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="llmmodel">
+                <span class="bi bi-chat-dots-fill-nav-menu" aria-hidden="true"></span> LLMModel
+            </NavLink>
+        </div>
+    </nav>
+</div>
+

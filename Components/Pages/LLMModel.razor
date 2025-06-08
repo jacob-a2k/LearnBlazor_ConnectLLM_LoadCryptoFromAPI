@@ -1,0 +1,71 @@
+﻿@page "/llmModel"
+@rendermode InteractiveServer
+
+@using MaIN.Core.Hub
+@using MaIN.Core.Hub.Contexts
+
+@using Microsoft.AspNetCore.Hosting
+@using Zaliczenie.Components.Models
+
+<h3>Chat with LLM</h3>
+
+<div class="border rounded p-3 mb-3 bg-light">
+    @foreach (var message in chatHistory)
+    {
+        <div class="mb-3 p-2 rounded @(message.IsUser ? "bg-primary text-white ms-5" : "bg-light me-5")">
+            <strong>@(message.IsUser ? "You" : "LLM chat"):</strong>
+            <p class="mb-0 mt-2">@message.Content</p>
+        </div>
+    }
+</div>
+
+<div class="border rounded p-3">
+    <div class="d-flex gap-2 mb-2">
+        <input type="text" class="form-control"
+               @bind="messageToLLM"
+               @bind:event="oninput"
+               @onkeydown="HandleKeyDown"
+               placeholder="Type your message..." />
+        <button class="btn btn-primary" @onclick="SendMessage">Send</button>
+    </div>
+</div>
+
+@code {
+    private string messageToLLM = "";
+
+    List<ChatMessage> chatHistory = new();
+    private ChatContext? chatInstance;
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(messageToLLM)) return;
+
+        chatHistory.Add(new ChatMessage { Content = messageToLLM, IsUser = true });
+        var userMessage = messageToLLM;
+        messageToLLM = "";
+
+        try
+        {
+            if (chatInstance == null)
+            {
+                chatInstance = AIHub.Chat()
+                .WithModel("gemma3:4b");
+            }
+
+            var result = await chatInstance
+                .WithMessage(userMessage)
+                .CompleteAsync();
+
+            chatHistory.Add(new ChatMessage { Content = result.Message.Content, IsUser = false });
+        }
+        catch (Exception ex)
+        {
+            chatHistory.Add(new ChatMessage { Content = $"Error: {ex.Message}", IsUser = false });
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SendMessage();
+    }
+}
